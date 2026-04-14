@@ -1,6 +1,6 @@
 # Fork-OPGG
 
-Clon estilo OP.GG para League of Legends con estadísticas de jugador, historial de partidas y más.
+Clone estilo OP.GG para League of Legends - Stats de jugador, historial de partidas y más. con estadísticas de jugador, historial de partidas y más.
 
 ## Características
 
