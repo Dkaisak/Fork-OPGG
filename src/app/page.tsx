@@ -1,65 +1,231 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import Sidebar from './components/Sidebar';
+import SearchBar from './components/SearchBar';
+import PlayerCard from './components/PlayerCard';
+// import RoleStats from './components/RoleStats';
+import Masteries from './components/Masteries';
+import MatchHistory from './components/MatchHistory';
+import ChampionStats from './components/ChampionStats';
+// import Trend from './components/Trend';
+import TopBuilds from './components/TopBuilds';
+// import MatchupOptimizer from './components/MatchupOptimizer';
 
 export default function Home() {
+  const searchParams = useSearchParams();
+  
+  const [gameName, setGameName] = useState(searchParams.get('gameName') || '');
+  const [tagLine, setTagLine] = useState(searchParams.get('tagLine') || '');
+  const [region, setRegion] = useState(searchParams.get('region') || 'la1');
+  const [playerData, setPlayerData] = useState<any>(null);
+  const [playerError, setPlayerError] = useState('');
+  const [playerCache, setPlayerCache] = useState<Record<string, any>>({});
+
+  const [matchupData, setMatchupData] = useState<any>(null);
+  const [matchupError, setMatchupError] = useState('');
+  const [matchupCache, setMatchupCache] = useState<Record<string, any>>({});
+
+  const [expandedMatch, setExpandedMatch] = useState<string | null>(null);
+  const [matchDetails, setMatchDetails] = useState<any>(null);
+  const [matchDetailsLoading, setMatchDetailsLoading] = useState(false);
+  const [matchCache, setMatchCache] = useState<Record<string, any>>({});
+
+  const [loading, setLoading] = useState(false);
+  const [initialLoad, setInitialLoad] = useState(true);
+
+  useEffect(() => {
+    const name = searchParams.get('gameName');
+    const tag = searchParams.get('tagLine');
+    const reg = searchParams.get('region');
+    if (name && tag) {
+      setGameName(name);
+      setTagLine(tag);
+      if (reg) setRegion(reg);
+      setTimeout(() => searchPlayer(), 100);
+    } else {
+      setInitialLoad(false);
+    }
+  }, []);
+
+  const toggleMatchDetails = async (matchId: string) => {
+    if (expandedMatch === matchId) {
+      setExpandedMatch(null);
+      setMatchDetails(null);
+      return;
+    }
+    
+    if (matchCache[matchId]) {
+      setExpandedMatch(matchId);
+      setMatchDetails(matchCache[matchId]);
+      return;
+    }
+    
+    setExpandedMatch(matchId);
+    setMatchDetailsLoading(true);
+    setMatchDetails(null);
+    
+    try {
+      const timestamp = Date.now();
+      const res = await fetch(`/api/match?matchId=${matchId}&region=${region}&puuid=${playerData.puuid || ''}&t=${timestamp}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        setMatchCache(prev => ({ ...prev, [matchId]: data }));
+        setMatchDetails(data);
+      }
+    } catch (err) {
+      console.error('Error fetching match:', err);
+    } finally {
+      setMatchDetailsLoading(false);
+    }
+  };
+
+  const searchPlayer = async () => {
+    const cacheKey = `${gameName}-${tagLine}-${region}`;
+    
+    if (playerCache[cacheKey]) {
+      setPlayerData(playerCache[cacheKey]);
+      const url = `/?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}&region=${region}`;
+      window.history.pushState({}, '', url);
+      return;
+    }
+    
+    setLoading(true);
+    setPlayerError('');
+    setPlayerData(null);
+    
+    const timestamp = Date.now();
+    
+    try {
+      const res = await fetch(`/api/player?gameName=${gameName}&tagLine=${tagLine}&region=${region}&t=${timestamp}`);
+      const data = await res.json();
+      
+      if (res.status === 429) {
+        setPlayerError('Rate limit exceeded. Wait a moment and try again.');
+        setLoading(false);
+        return;
+      }
+      
+      if (!res.ok) {
+        setPlayerError(data.error || 'Error searching for player');
+      } else {
+        setPlayerCache(prev => ({ ...prev, [cacheKey]: data }));
+        setPlayerData(data);
+        const url = `/?gameName=${encodeURIComponent(gameName)}&tagLine=${encodeURIComponent(tagLine)}&region=${region}`;
+        window.history.pushState({}, '', url);
+      }
+    } catch (err) {
+      setPlayerError('Connection error');
+    } finally {
+      setLoading(false);
+      setInitialLoad(false);
+    }
+  };
+
+  const refreshMatches = async () => {
+    if (!gameName || !tagLine) return;
+    
+    setLoading(true);
+    
+    try {
+      const timestamp = Date.now();
+      const res = await fetch(`/api/player?gameName=${gameName}&tagLine=${tagLine}&region=${region}&refresh=true&t=${timestamp}`);
+      const data = await res.json();
+      
+      if (res.ok) {
+        const cacheKey = `${gameName}-${tagLine}-${region}`;
+        setPlayerCache(prev => ({ ...prev, [cacheKey]: data }));
+        setPlayerData(data);
+      }
+    } catch (err) {
+      console.error('Error refreshing:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const searchMatchup = async (ally: string, enemy: string) => {
+    if (!ally || !enemy) return;
+    
+    const cacheKey = `${ally}-${enemy}`;
+    
+    if (matchupCache[cacheKey]) {
+      setMatchupData(matchupCache[cacheKey]);
+      return;
+    }
+    
+    setMatchupError('');
+    setMatchupData(null);
+    
+    try {
+      const timestamp = Date.now();
+      const res = await fetch(`/api/matchup?ally=${ally}&enemy=${enemy}&t=${timestamp}`);
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setMatchupError(data.error || 'Error getting matchup');
+      } else {
+        setMatchupCache(prev => ({ ...prev, [cacheKey]: data }));
+        setMatchupData(data);
+      }
+    } catch (err) {
+      setMatchupError('Connection error');
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen p-4" style={{ background: 'linear-gradient(180deg, #0e1e2d 0%, #0a1520 100%)' }}>
+      <div className="max-w-6xl mx-auto">
+        <Sidebar playerData={playerData} />
+        <main className="flex-1 min-w-0 space-y-4 main-content">
+          <SearchBar
+            gameName={gameName}
+            tagLine={tagLine}
+            region={region}
+            loading={loading}
+            error={playerError}
+            onSearch={searchPlayer}
+            onGameNameChange={setGameName}
+            onTagLineChange={setTagLine}
+            onRegionChange={setRegion}
+          />
+          
+          {initialLoad && (
+            <div className="flex justify-center py-12">
+              <div className="animate-spin rounded-full h-10 w-10 border-2" style={{ borderColor: '#4fa3e3', borderTopColor: 'transparent' }}></div>
+            </div>
+          )}
+
+          {playerData && !loading && !initialLoad && (
+            <>
+              <PlayerCard
+                playerData={playerData}
+                onRefresh={refreshMatches}
+                loading={loading}
+              />
+
+              {playerData.masteries && playerData.masteries.length > 0 && (
+                <Masteries masteries={playerData.masteries} />
+              )}
+
+              <MatchHistory
+                matches={playerData.matches}
+                expandedMatch={expandedMatch}
+                matchDetails={matchDetails}
+                matchDetailsLoading={matchDetailsLoading}
+                onToggleMatch={toggleMatchDetails}
+                region={region}
+              />
+            </>
+          )}
+
+          {playerData?.topBuilds?.length > 0 && (
+            <TopBuilds topBuilds={playerData.topBuilds} />
+          )}
+        </main>
+      </div>
     </div>
   );
 }
