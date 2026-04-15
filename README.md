@@ -1,136 +1,86 @@
 # Fork-OPGG
 
-Clone estilo OP.GG para League of Legends - Stats de jugador, historial de partidas y más. con estadísticas de jugador, historial de partidas y más.
+Clone estilo OP.GG para League of Legends - Stats de jugador, historial de partidas y más.
 
 ## Características
 
 ### Búsqueda de Jugador
 - Busca por Riot ID (GameName#TagLine)
 - Selector de región (NA, EUW, EUNE, LAN, LAS, BR, KR, JP, OCE, TR, RU)
-- Caché local para evitar requests duplicados
+- **Caché local + server (5 min TTL)**
+- **Rate limiting (100 req/2min)**
+- Botón X para borrar rápida
 
 ### Perfil del Jugador
-- Imagen de perfil y nivel de invocador
+- Imagen de perfil y nivel
 - Tier actual (Iron a Challenger)
 - LP, wins/losses, winrate
 - Racha de victorias/derrotas
-- Gráfico circular de winrate
 
 ### Estadísticas
-- **Por Rol** (TOP, JG, MID, ADC, SUP) - últimas 20 partidas
-- **Por Campeón** - últimas 100 partidas (en sidebar)
-- **Maestrías** - nivel y puntos por campeón
-- **Tendencia** - últimas 10 vs anteriores 10 (WR%, KDA, CS/m)
+- **Por Rol** (TOP, JG, MID, ADC, SUP)
+- **Por Campeón**
+- **Maestrías**
+- **Tendencia** - últimas 10 vs anteriores 10
+- **Top Builds** - builds más usadas
 
 ### Historial de Partidas
 - Últimas 20 partidas rankeadas
-- Detalles expandibles por partida:
-  - K/D/A
-  - CS por minuto
-  - Items equipados
-  - Spells de invocador
-  - Stats del equipo azul y rojo
-  - Daño realizado/tomado (barras visuales)
+- Detalles expandibles: K/D/A, CS/m, Items, Spells
 
 ### Interfaz
 - Tema oscuro estilo OP.GG
-- Sidebar fija izquierda con:
-  - Campeones más jugados (10)
-  - Roles (TOP, JG, MID, ADC, SUP)
-  - Tendencia de rendimiento
 - Diseño responsive
 
 ## APIs Utilizadas
 
 ### Riot Games API
-- `account-v1` - Buscar jugador por Riot ID
+- `account-v1` - Buscar jugador
 - `summoner-v4` - Datos del invocador
-- `league-v4` - Rango actual
-- `champion-mastery-v4` - Maestrías (top 15)
-- `match-v5` - Historial de partidas (últimas 50)
+- `league-v4` - Rango
+- `champion-mastery-v4` - Maestrías
+- `match-v5` - Historial
 
 ### Endpoints locales
-- `/api/player` - Datos completos del jugador
-- `/api/match` - Detalles de una partida
-- `/api/player/season-stats` - Stats de temporada
+- `/api/player` - Datos completos
+- `/api/match` - Detalles
+- `/api/matchup` - Matchups
+- `/api/player/season-stats` - Stats temporada
 
 ## Cómo usar
 
 ### Requisitos
 - Node.js 18+
-- API Key de Riot Games (desarrollo o producción)
+- API Key de Riot Games
 
 ### Configuración
-1. Crear archivo `.env.local`:
 ```bash
 cp .env.local.example .env.local
+# Editar .env.local con tu API key
 ```
 
-2. Agregar tu API key:
-```env
-RIOT_API_KEY=RGAPI-tu-api-key-aqui
-```
-
-3. Instalar dependencias:
+### Instalar y ejecutar
 ```bash
 npm install
-```
-
-4. Iniciar servidor:
-```bash
 npm run dev
 ```
 
-5. Abrir http://localhost:3000
-
-## Deploy
-
-### Vercel (recomendado)
+### Deploy
 ```bash
-npm i -g vercel
 vercel
-```
-
-### Docker
-```bash
-docker build -t lol-optimizer .
-docker run -p 3000:3000 -e RIOT_API_KEY=tu-api-key lol-optimizer
-```
-
-## Estructura del Proyecto
-
-```
-lol-optimizer/
-├── src/app/
-│   ├── api/
-│   │   ├── player/          # API de datos del jugador
-│   │   ├── match/           # API de detalles de partida
-│   │   └── matchup/        # API de matchups
-│   ├── components/         # Componentes React
-│   │   ├── Sidebar.tsx
-│   │   ├── PlayerCard.tsx
-│   │   ├── MatchHistory.tsx
-│   │   ├── Masteries.tsx
-│   │   └── ...
-│   ├── page.tsx            # Página principal
-│   └── globals.css        # Estilos globales
-├── public/
-│   └── ranked-emblems/    # Imágenes de rangos
-└── package.json
+# o npm run build && npm start
 ```
 
 ## Tecnologías
 
-- **Next.js 16** - Framework React
-- **TypeScript** - Tipado estático
-- **Tailwind CSS** - Estilos
-- **Riot Games API** - Datos de League of Legends
+- **Next.js 16**
+- **TypeScript**
+- **Tailwind CSS**
 
 ## Notas
 
-- Rate limit: 60 requests/2 minutos (puede variar por región)
-- Las imágenes de campeones/run son de Data Dragon (CDN público)
-- Requiere API key de desarrollo o producción de Riot Games
+- Rate limit: 100 requests/2 minutos
+- Imágenes de Data Dragon CDN
 
 ## Licencia
 
