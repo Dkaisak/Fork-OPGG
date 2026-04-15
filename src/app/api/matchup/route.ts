@@ -92,7 +92,8 @@ async function rateLimitedFetch(url: string, options: RequestInit = {}): Promise
 
 async function getPuuid(gameName: string, tagLine: string, region: string) {
   const route = accountRoutes[region] || 'americas';
-  const url = `https://${route}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
+  const fixedRoute = route.includes('.api.riotgames.com') ? route : `${route}.api.riotgames.com`;
+  const url = `https://${fixedRoute}/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
   const response = await rateLimitedFetch(url);
   
   if (!response.ok) return null;
@@ -102,7 +103,8 @@ async function getPuuid(gameName: string, tagLine: string, region: string) {
 
 async function getMatchHistory(puuid: string, region: string, count: number = 20) {
   const route = accountRoutes[region] || 'americas';
-  const url = `https://${route}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${count}`;
+  const fixedRoute = route.includes('.api.riotgames.com') ? route : `${route}.api.riotgames.com`;
+  const url = `https://${fixedRoute}/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${count}`;
   const response = await rateLimitedFetch(url, { cache: 'no-store' });
   
   if (!response.ok) return null;
@@ -111,7 +113,8 @@ async function getMatchHistory(puuid: string, region: string, count: number = 20
 
 async function getMatchDetails(matchId: string, region: string) {
   const route = accountRoutes[region] || 'americas';
-  const url = `https://${route}.api.riotgames.com/lol/match/v5/matches/${matchId}`;
+  const fixedRoute = route.includes('.api.riotgames.com') ? route : `${route}.api.riotgames.com`;
+  const url = `https://${fixedRoute}/lol/match/v5/matches/${matchId}`;
   const response = await rateLimitedFetch(url);
   
   if (!response.ok) return null;

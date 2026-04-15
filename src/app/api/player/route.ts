@@ -49,7 +49,7 @@ const accountRoutes: Record<string, string> = {
 
 async function getPuuid(gameName: string, tagLine: string, region: string) {
   const route = accountRoutes[region] || 'americas';
-  const url = `https://${route}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
+  const url = `https://${route}/riot/account/v1/accounts/by-riot-id/${gameName}/${tagLine}`;
   const response = await fetch(url, {
     headers: { 'X-Riot-Token': RIOT_API_KEY! }
   });
@@ -65,17 +65,17 @@ async function getPuuid(gameName: string, tagLine: string, region: string) {
 }
 
 const regionRoutes: Record<string, string> = {
-  na1: 'na1',
-  euw1: 'euw1',
-  eune: 'eun1',
-  kr: 'kr1',
-  la1: 'la1',
-  la2: 'la2',
-  br1: 'br1',
-  jp1: 'jp1',
-  ru: 'ru',
-  tr1: 'tr1',
-  oc1: 'oc1'
+  na1: 'na1.api.riotgames.com',
+  euw1: 'euw1.api.riotgames.com',
+  eune: 'eun1.api.riotgames.com',
+  kr: 'kr.api.riotgames.com',
+  la1: 'la1.api.riotgames.com',
+  la2: 'la2.api.riotgames.com',
+  br1: 'br1.api.riotgames.com',
+  jp1: 'jp1.api.riotgames.com',
+  ru: 'ru.api.riotgames.com',
+  tr1: 'tr1.api.riotgames.com',
+  oc1: 'oc1.api.riotgames.com'
 };
 
 function getRoute(region: string): string {
@@ -84,7 +84,7 @@ function getRoute(region: string): string {
 
 async function getSummonerByPuuid(puuid: string, region: string) {
   const route = getRoute(region);
-  const url = `https://${route}.api.riotgames.com/lol/summoner/v4/summoners/by-puuid/${puuid}`;
+  const url = `https://${route}/lol/summoner/v4/summoners/by-puuid/${puuid}`;
   const response = await fetch(url, {
     headers: { 'X-Riot-Token': RIOT_API_KEY! }
   });
@@ -96,7 +96,7 @@ async function getSummonerByPuuid(puuid: string, region: string) {
 
 async function getLeagueEntriesByPuuid(puuid: string, region: string) {
   const route = getRoute(region);
-  const url = `https://${route}.api.riotgames.com/lol/league/v4/entries/by-puuid/${puuid}`;
+  const url = `https://${route}/lol/league/v4/entries/by-puuid/${puuid}`;
   const response = await fetch(url, {
     headers: { 
       'X-Riot-Token': RIOT_API_KEY!,
@@ -116,7 +116,7 @@ async function getLeagueEntriesByPuuid(puuid: string, region: string) {
 
 async function getChampionMasteries(puuid: string, region: string) {
   const route = getRoute(region);
-  const url = `https://${route}.api.riotgames.com/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=15`;
+  const url = `https://${route}/lol/champion-mastery/v4/champion-masteries/by-puuid/${puuid}/top?count=15`;
   const response = await fetch(url, {
     headers: { 'X-Riot-Token': RIOT_API_KEY! }
   });
@@ -135,7 +135,7 @@ async function getChampionList(region: string) {
     return championListCache[cacheKey];
   }
   
-  const url = `https://${route}.api.riotgames.com/lol/champion/v3/champions`;
+  const url = `https://${route}/lol/champion/v3/champions`;
   const response = await fetch(url, {
     headers: { 'X-Riot-Token': RIOT_API_KEY! }
   });
@@ -158,7 +158,7 @@ async function getChampionList(region: string) {
 async function getMatchHistory(puuid: string, region: string, count: number = 50, startTime?: number) {
   const route = accountRoutes[region] || 'americas';
   // 420 = RANKED_SOLO_5x5
-  let url = `https://${route}.api.riotgames.com/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${count}`;
+  let url = `https://${route}/lol/match/v5/matches/by-puuid/${puuid}/ids?queue=420&start=0&count=${count}`;
   if (startTime) {
     url += `&startTime=${startTime}`;
   }
@@ -178,7 +178,7 @@ async function getMatchHistory(puuid: string, region: string, count: number = 50
 
 async function getMatchDetails(matchId: string, region: string) {
   const route = accountRoutes[region] || 'americas';
-  const url = `https://${route}.api.riotgames.com/lol/match/v5/matches/${matchId}`;
+  const url = `https://${route}/lol/match/v5/matches/${matchId}`;
   const response = await fetch(url, {
     headers: { 'X-Riot-Token': RIOT_API_KEY! }
   });

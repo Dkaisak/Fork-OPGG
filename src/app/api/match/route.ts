@@ -170,7 +170,8 @@ export async function GET(request: Request) {
     await Promise.all([loadItemMap(), loadSpellMap()]);
     
     const route = accountRoutes[region] || 'americas';
-    const url = `https://${route}.api.riotgames.com/lol/match/v5/matches/${matchId}`;
+    const fixedRoute = route.includes('.api.riotgames.com') ? route : `${route}.api.riotgames.com`;
+    const url = `https://${fixedRoute}/lol/match/v5/matches/${matchId}`;
     const response = await rateLimitedFetch(url);
     
     if (!response.ok) {
