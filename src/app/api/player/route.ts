@@ -1,6 +1,37 @@
 import { NextResponse } from 'next/server';
+import { isRateLimited } from '@utils/rateLimit';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
+
+interface CacheEntry<T> {
+  data: T;
+  expires: number;
+}
+
+const playerCache = new Map<string, CacheEntry<any>>();
+const CACHE_TTL = 1000 * 60 * 5;
+
+function getCacheKey(gameName: string, tagLine: string, region: string): string {
+  return `${region}:${gameName}:${tagLine}`;
+}
+
+function getCached<T>(key: string): T | null {
+  const entry = playerCache.get(key);
+  if (entry && entry.expires > Date.now()) {
+    return entry.data;
+  }
+  playerCache.delete(key);
+  return null;
+}
+
+function setCache<T>(key: string, data: T): void {
+  playerCache.set(key, { data, expires: Date.now() + CACHE_TTL });
+  
+  if (playerCache.size > 100) {
+    const oldestKey = playerCache.keys().next().value;
+    if (oldestKey) playerCache.delete(oldestKey);
+  }
+}
 
 const accountRoutes: Record<string, string> = {
   na1: 'americas',
@@ -94,7 +125,7 @@ async function getChampionMasteries(puuid: string, region: string) {
   return response.json();
 }
 
-let championListCache: Record<string, any> = {};
+const championListCache: Record<string, any> = {};
 
 async function getChampionList(region: string) {
   const route = getRoute(region);
@@ -171,7 +202,7 @@ async function getRunesReforged(): Promise<any> {
   }
 }
 
-let perkCache: Record<string, any> = {};
+const perkCache: Record<string, any> = {};
 async function getPerks(): Promise<Record<string, any>> {
   if (Object.keys(perkCache).length > 0) return perkCache;
   
@@ -253,10 +284,24 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'API Key no configurada' }, { status: 500 });
   }
 
+  if (isRateLimited()) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Intenta más tarde.' }, { status: 429 });
+  }
+
   try {
+    const cacheKey = getCacheKey(gameName!, tagLine!, region);
+    const refresh = searchParams.get('refresh') === 'true';
+    
+    if (!refresh) {
+      const cached = getCached(cacheKey);
+      if (cached) {
+        return NextResponse.json(cached);
+      }
+    }
+    
     console.log('Buscando:', gameName, '#', tagLine, 'en región:', region);
     
-    const puuid = await getPuuid(gameName, tagLine, region);
+    const puuid = await getPuuid(gameName!, tagLine!, region);
     console.log('PUUID:', puuid ? 'Obtenido' : 'No encontrado');
     if (!puuid) {
       return NextResponse.json({ error: 'Jugador no encontrado. Verifica el Riot ID (GameName#TagLine)' }, { status: 404 });
@@ -268,32 +313,32 @@ export async function GET(request: Request) {
     }
 
     console.log('Consultando league entries para PUUID:', puuid);
-    const entries = await getLeagueEntriesByPuuid(puuid, region);
+    const [entries, masteries, matchIds] = await Promise.all([
+      getLeagueEntriesByPuuid(puuid, region),
+      getChampionMasteries(puuid, region),
+      getMatchHistory(puuid, region, 50)
+    ]);
+    
     console.log('League entries:', entries);
-    
-    const masteries = await getChampionMasteries(puuid, region);
-    
-    // Obtener historial de partidas rankeadas (20 para display, 50 para stats)
-    console.log('Consultando historial de partidas...');
-    const matchIds = await getMatchHistory(puuid, region, 50);
     console.log('Match IDs:', matchIds);
     
     const championStats: Record<number, any> = {};
     const runesMap: Record<string, any> = {};
     const roleStats: Record<string, any> = {};
-    let recentMatches: any[] = [];
-    let allMatchesDetailed: any[] = [];
+    const recentMatches: any[] = [];
+    const allMatchesDetailed: any[] = [];
     
     if (matchIds && matchIds.length > 0) {
-      // Obtener más detalles de partidas para stats (hasta 50)
       const matchesToFetch = Math.min(matchIds.length, 50);
-      const matchDetailsCache: Record<string, any> = {};
+      const matchDetailsPromises = matchIds.slice(0, matchesToFetch).map((matchId: string) => 
+        getMatchDetails(matchId, region).catch(() => null)
+      );
+      const matchResults = await Promise.all(matchDetailsPromises);
       
-      for (let i = 0; i < matchesToFetch; i++) {
+      for (let i = 0; i < matchResults.length; i++) {
+        const matchDetails = matchResults[i];
         const matchId = matchIds[i];
-        const matchDetails = await getMatchDetails(matchId, region);
         if (matchDetails) {
-          matchDetailsCache[matchId] = matchDetails;
           const player = matchDetails.info.participants.find((p: any) => p.puuid === puuid);
           if (player) {
             const champId = player.championId;
@@ -551,12 +596,7 @@ export async function GET(request: Request) {
       }));
     }
 
-    // Usar championMap para los nombres
-    const getChampionName = (id: number) => {
-      return championMap[id] || `Champion ${id}`;
-    };
-
-    return NextResponse.json({
+    const responseData = {
       puuid,
       summonerName: gameName,
       summonerLevel: summoner.summonerLevel,
@@ -587,7 +627,11 @@ export async function GET(request: Request) {
       winStreak,
       lossStreak,
       totalMatchesAnalyzed: allMatchesDetailed.length
-    });
+    };
+    
+    setCache(cacheKey, responseData);
+    
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500 });

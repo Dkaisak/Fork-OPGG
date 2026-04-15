@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 interface PlayerCardProps {
   playerData: any;
   onRefresh: () => void;
@@ -44,9 +46,11 @@ export default function PlayerCard({ playerData, onRefresh, loading }: PlayerCar
     <div className="op-card p-5">
       <div className="flex items-start gap-5">
         <div className="relative">
-          <img
+          <Image
             src={`https://ddragon.leagueoflegends.com/cdn/16.7.1/img/profileicon/${playerData.profileIconId}.png`}
             alt="Profile"
+            width={96}
+            height={96}
             className="w-24 h-24 rounded-full"
             style={{ border: '3px solid #30363d' }}
           />
@@ -80,9 +84,11 @@ export default function PlayerCard({ playerData, onRefresh, loading }: PlayerCar
         <div className="mt-6 p-4 rounded-lg" style={{ background: '#1a2d42' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <img
+              <Image
                 src={`/ranked-emblems/Rank=${playerData.rank.tier}.png`}
                 alt={playerData.rank.tier}
+                width={56}
+                height={56}
                 className="w-14 h-14"
               />
               <div>

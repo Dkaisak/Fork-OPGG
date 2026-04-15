@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 interface MatchHistoryProps {
   matches: any[];
   expandedMatch: string | null;
@@ -19,11 +21,6 @@ export default function MatchHistory({
 }: MatchHistoryProps) {
   if (!matches || matches.length === 0) return null;
 
-  const getCsPerMin = (cs: number, gameDuration: number) => {
-    const minutes = gameDuration / 60;
-    return minutes > 0 ? (cs / minutes).toFixed(2) : '0.00';
-  };
-
   return (
     <div className="mt-5">
       <h3 className="text-base font-semibold mb-3" style={{ color: '#8b949e' }}>PARTIDAS RECIENTES</h3>
@@ -40,7 +37,7 @@ export default function MatchHistory({
             <button onClick={() => onToggleMatch(match.matchId)} className="w-full text-left">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <img src={match.championImage} alt={match.championName} className="w-10 h-10 rounded" />
+                  <Image src={match.championImage} alt={match.championName} width={40} height={40} className="w-10 h-10 rounded" unoptimized />
                   <div>
                     <p className="font-medium text-sm">{match.championName}</p>
                     <p className={`text-xs font-bold ${match.win ? 'text-green-400' : 'text-red-400'}`}>

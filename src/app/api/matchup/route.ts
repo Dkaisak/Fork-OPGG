@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isRateLimited } from '@utils/rateLimit';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
@@ -291,6 +292,10 @@ export async function GET(request: Request) {
 
   if (!RIOT_API_KEY) {
     return NextResponse.json({ error: 'API Key no configurada' }, { status: 500 });
+  }
+
+  if (isRateLimited()) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Intenta más tarde.' }, { status: 429 });
   }
 
   try {

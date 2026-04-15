@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+
 interface MasteriesProps {
   masteries: any[];
 }
@@ -19,7 +21,7 @@ export default function Masteries({ masteries }: MasteriesProps) {
       <div className="flex gap-2 w-full">
         {masteries.slice(0, 5).map((m, idx) => (
           <div key={idx} className="flex-1 flex flex-col items-center p-2 rounded min-w-0" style={{ background: '#1a2d42' }}>
-            <img src={m.championImage} alt={m.championName} className="w-12 h-12 rounded" />
+            <Image src={m.championImage} alt={m.championName} width={48} height={48} className="w-12 h-12 rounded" unoptimized />
             <p className="font-medium text-xs mt-1 truncate" style={{ color: '#f0f6fc' }}>{m.championName}</p>
             <div className="flex flex-col items-center">
               <span className="text-xs font-bold" style={{ color: '#fbbf24' }}>Nivel {m.level}</span>

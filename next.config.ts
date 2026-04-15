@@ -1,9 +1,16 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  devIndicators: {
-    buildActivity: false,
-    buildActivityPosition: 'bottom-right',
+  compress: true,
+  poweredByHeader: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'ddragon.leagueoflegends.com',
+        pathname: '/**',
+      },
+    ],
   },
 };
 

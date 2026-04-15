@@ -36,25 +36,47 @@ export default function SearchBar({
       <div className="flex flex-wrap gap-3 items-end">
         <div className="flex-1 min-w-[180px]">
           <label className="block text-xs mb-1" style={{ color: '#8b949e' }}>Nombre</label>
-          <input
-            type="text"
-            value={gameName}
-            onChange={(e) => onGameNameChange(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="op-input w-full"
-            placeholder="Invocador"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={gameName}
+              onChange={(e) => onGameNameChange(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="op-input w-full pr-8"
+              placeholder="Invocador"
+            />
+            {gameName && (
+              <button
+                type="button"
+                onClick={() => onGameNameChange('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
         <div className="w-20">
           <label className="block text-xs mb-1" style={{ color: '#8b949e' }}>Tag</label>
-          <input
-            type="text"
-            value={tagLine}
-            onChange={(e) => onTagLineChange(e.target.value)}
-            onKeyDown={handleKeyPress}
-            className="op-input w-full"
-            placeholder="NA1"
-          />
+          <div className="relative">
+            <input
+              type="text"
+              value={tagLine}
+              onChange={(e) => onTagLineChange(e.target.value)}
+              onKeyDown={handleKeyPress}
+              className="op-input w-full pr-8"
+              placeholder="NA1"
+            />
+            {tagLine && (
+              <button
+                type="button"
+                onClick={() => onTagLineChange('')}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white"
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
         <div className="w-24">
           <label className="block text-xs mb-1" style={{ color: '#8b949e' }}>Región</label>

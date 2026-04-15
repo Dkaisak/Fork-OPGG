@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { isRateLimited } from '@utils/rateLimit';
 
 const RIOT_API_KEY = process.env.RIOT_API_KEY;
 
@@ -44,8 +45,8 @@ const championMap: Record<number, string> = {
   238: 'Zed', 221: 'Zeri', 115: 'Ziggs', 26: 'Zilean', 142: 'Zoe', 143: 'Zyra'
 };
 
-let itemCache: Record<number, string> = {};
-let spellCache: Record<string, { name: string; image: string }> = {};
+const itemCache: Record<number, string> = {};
+const spellCache: Record<string, { name: string; image: string }> = {};
 
 async function loadItemMap(): Promise<Record<number, string>> {
   if (Object.keys(itemCache).length > 0) return itemCache;
@@ -159,6 +160,10 @@ export async function GET(request: Request) {
 
   if (!RIOT_API_KEY) {
     return NextResponse.json({ error: 'API Key no configurada' }, { status: 500 });
+  }
+
+  if (isRateLimited()) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Intenta más tarde.' }, { status: 429 });
   }
 
   try {
